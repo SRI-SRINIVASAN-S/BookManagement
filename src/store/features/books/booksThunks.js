@@ -2,7 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
 const API_BASE_URL =
-  "https://crudcrud.com/api/590d5caafdf94ba7b6415950d4bf1043/books";
+  "https://crudcrud.com/api/be8712c463f646bd8033ca5e089dc412/books";
 
 // Fetch all books
 export const fetchBooksThunk = createAsyncThunk(
