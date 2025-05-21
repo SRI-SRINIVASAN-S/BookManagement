@@ -1,42 +1,38 @@
-import axios from "axios";
-import BookCard from "../components/BookCard";
-import Header from "../components/Header";
-import Loader from "../components/Loader";
-import ErrorMessage from "../components/ErrorMessage";
-import EditBookModal from "../components/EditBookModal";
-import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
-import { useState, useEffect } from "react";
-import { API_BASE_URL } from "../constants/api";
+import BookCard from "../components/Ui/BookCard";
+import Header from "../components/Ui/Header";
+import Loader from "../components/common/Loader";
+import ErrorMessage from "../components/common/ErrorMessage";
+import EditBookModal from "../components/modals/EditBookModal";
+import ConfirmDeleteModal from "../components/modals/ConfirmDeleteModal";
+import AddBookModal from "../components/modals/AddBookModal";
+import Pagination from "../components/Ui/Pagination";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchBooksThunk,
+  addBookThunk,
+  updateBookThunk,
+  deleteBookThunk,
+} from "../store/features/books/booksThunks";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const PAGE_SIZE = 10;
 
 const Dashboard = () => {
-  const [books, setBooks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState();
+  const dispatch = useDispatch();
+  const { items: books, loading, error } = useSelector((state) => state.books);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [genre, setGenre] = useState("All");
   const [status, setStatus] = useState("All");
   const [editBook, setEditBook] = useState(null);
   const [deleteBook, setDeleteBook] = useState(null);
-
-  const fetchBooksInfo = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get(API_BASE_URL);
-      setBooks(res.data);
-    } catch (error) {
-      console.log(error);
-      setError("Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [addModalOpen, setAddModalOpen] = useState(false);
 
   useEffect(() => {
-    fetchBooksInfo();
-  }, []);
+    dispatch(fetchBooksThunk());
+  }, [dispatch]);
 
   // Filter books by title, genre, and status
   const filteredBooks = books.filter((book) => {
@@ -53,36 +49,42 @@ const Dashboard = () => {
   const startIdx = (currentPage - 1) * PAGE_SIZE;
   const currentBooks = filteredBooks.slice(startIdx, startIdx + PAGE_SIZE);
 
-  // Reset to first page when search/filter changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, genre, status]);
 
-  // Edit handlers
+  // Handlers
   const handleEdit = (book) => setEditBook(book);
+
   const handleUpdateBook = async (updatedBook) => {
-    try {
-      await axios.put(`${API_BASE_URL}/${updatedBook._id}`, updatedBook);
-      setBooks((prev) =>
-        prev.map((b) => (b._id === updatedBook._id ? updatedBook : b))
-      );
+    const res = await dispatch(updateBookThunk(updatedBook));
+    if (res.type.endsWith("fulfilled")) {
       setEditBook(null);
-    } catch (err) {
-      console.log(err);
-      alert("Failed to update book");
+      toast.success("Book updated successfully!");
+    } else {
+      toast.error("Failed to update book");
     }
   };
 
-  // Delete handlers
   const handleDelete = (book) => setDeleteBook(book);
+
   const handleConfirmDelete = async () => {
-    try {
-      await axios.delete(`${API_BASE_URL}/${deleteBook._id}`);
-      setBooks((prev) => prev.filter((b) => b._id !== deleteBook._id));
+    const res = await dispatch(deleteBookThunk(deleteBook._id));
+    if (res.type.endsWith("fulfilled")) {
       setDeleteBook(null);
-    } catch (err) {
-      console.log(err);
-      alert("Failed to delete book");
+      toast.success("Book deleted successfully!");
+    } else {
+      toast.error("Failed to delete book");
+    }
+  };
+
+  const handleAddBook = async (newBook) => {
+    const res = await dispatch(addBookThunk(newBook));
+    if (res.type.endsWith("fulfilled")) {
+      setAddModalOpen(false);
+      toast.success("Book added successfully!");
+    } else {
+      toast.error("Failed to add book");
     }
   };
 
@@ -91,14 +93,23 @@ const Dashboard = () => {
 
   return (
     <div>
+      <ToastContainer position="top-right" autoClose={2000} />
       <Header
         onSearch={setSearchTerm}
         onGenreChange={setGenre}
         onStatusChange={setStatus}
         genre={genre}
         status={status}
+        onAddBook={() => setAddModalOpen(true)}
       />
       <div className="flex flex-wrap -m-2">
+        {currentBooks.length === 0 && (
+          <div className="w-full flex items-center justify-center py-20">
+            <p className="text-2xl font-semibold text-gray-400">
+              No books found
+            </p>
+          </div>
+        )}
         {currentBooks.map((book) => (
           <BookCard
             key={book._id}
@@ -108,26 +119,15 @@ const Dashboard = () => {
           />
         ))}
       </div>
-      <div className="flex justify-center items-center mt-4 space-x-2">
-        <button
-          className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300"
-          onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-          disabled={currentPage === 1}
-        >
-          Prev
-        </button>
-        <span>
-          Page {currentPage} of {totalPages}
-        </span>
-        <button
-          className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300"
-          onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-          disabled={currentPage === totalPages || totalPages === 0}
-        >
-          Next
-        </button>
-      </div>
-      {/* Edit Modal */}
+
+      {/* Pagination */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
+
+      {/* Edit book modal */}
       {editBook && (
         <EditBookModal
           book={editBook}
@@ -135,12 +135,21 @@ const Dashboard = () => {
           onSave={handleUpdateBook}
         />
       )}
-      {/* Delete Modal */}
+
+      {/* Delete book modal */}
       {deleteBook && (
         <ConfirmDeleteModal
           book={deleteBook}
           onClose={() => setDeleteBook(null)}
           onConfirm={handleConfirmDelete}
+        />
+      )}
+
+      {/* Add book modal */}
+      {addModalOpen && (
+        <AddBookModal
+          onClose={() => setAddModalOpen(false)}
+          onSave={handleAddBook}
         />
       )}
     </div>

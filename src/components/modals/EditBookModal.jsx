@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 const EditBookModal = ({ book, onClose, onSave }) => {
   const [form, setForm] = useState({ ...book });
@@ -60,7 +60,7 @@ const EditBookModal = ({ book, onClose, onSave }) => {
           <option value="Available">Available</option>
           <option value="Issued">Issued</option>
         </select>
-        <div className="flex gap-2 mt-4">
+        <div className="flex gap-2 mt-4 justify-center">
           <button
             type="submit"
             className="bg-blue-500 text-white px-4 py-2 rounded"

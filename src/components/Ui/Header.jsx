@@ -24,7 +24,14 @@ const genres = [
 ];
 const statuses = ["All", "Available", "Issued"];
 
-const Header = ({ onSearch, onGenreChange, onStatusChange, genre, status }) => {
+const Header = ({
+  onSearch,
+  onGenreChange,
+  onStatusChange,
+  genre,
+  status,
+  onAddBook,
+}) => {
   const [search, setSearch] = useState("");
 
   const handleSearchChange = (e) => {
@@ -71,7 +78,9 @@ const Header = ({ onSearch, onGenreChange, onStatusChange, genre, status }) => {
             ))}
           </Select>
         </FormControl>
-        <Button variant="contained">Add Book</Button>
+        <Button variant="contained" onClick={onAddBook}>
+          Add Book
+        </Button>
       </div>
     </div>
   );
