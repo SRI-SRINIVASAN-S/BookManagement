@@ -2,6 +2,9 @@
 
 A simple React + Vite application for managing a collection of books. Features include searching, filtering, pagination, and CRUD operations using modals.
 
+## Live Demo 
+https://storied-genie-214b29.netlify.app/
+
 ## Features
 
 - View a paginated list of books
