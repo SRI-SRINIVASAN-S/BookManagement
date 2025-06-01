@@ -94,6 +94,7 @@ const Dashboard = () => {
   return (
     <div>
       <ToastContainer position="top-right" autoClose={2000} />
+      <h1 className="animate-fadeInUp text-3xl font-bold text-center my-6">Welcome to Your Bookstore</h1>
       <Header
         onSearch={setSearchTerm}
         onGenreChange={setGenre}
@@ -105,7 +106,7 @@ const Dashboard = () => {
       <div className="flex flex-wrap -m-2">
         {currentBooks.length === 0 && (
           <div className="w-full flex items-center justify-center py-20">
-            <p className="text-2xl font-semibold text-gray-400">
+            <p className="text-2xl font-semibold text-gray-400 animate-fadeInUp">
               No books found
             </p>
           </div>
